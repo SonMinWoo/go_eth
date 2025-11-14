@@ -31,11 +31,11 @@ func NewRepository(config *config.Config) (*Repository, error) {
 
 	mConfig := config.Mongo
 	if r.client, err = mongo.Connect(ctx, options.Client().ApplyURI(mConfig.Uri)); err != nil {
-		r.log.Error("failed to connect to mongo", "uri", mConfig.Uri)
-		return nil, err
+		//r.log.Error("failed to connect to mongo", "uri", mConfig.Uri)
+		//return nil, err
 	} else if err = r.client.Ping(ctx, nil); err != nil {
-		r.log.Error("failed to ping to mongo", "uri", mConfig.Uri)
-		return nil, err
+		//r.log.Error("failed to ping to mongo", "uri", mConfig.Uri)
+		//return nil, err
 	} else {
 		r.db = r.client.Database(mConfig.DB)
 
