@@ -5,9 +5,11 @@ import (
 	"block_chain/repository"
 	"block_chain/service"
 	"bufio"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 	"time"
 
 	. "block_chain/types"
@@ -45,9 +47,35 @@ func NewApp(config *config.Config) {
 		for {
 			sc.Scan()
 			fmt.Println(sc.Text())
+
+			input := strings.Split(sc.Text(), " ")
+			if err = inputValueAssesment(input); err != nil {
+				a.log.Error("Failed to call cli", "err", err, "input", input)
+				panic(err)
+			}
 		}
 	}
 
+}
+
+func inputValueAssesment(input []string) error {
+	msg := errors.New("check Use Case")
+
+	if len(input) == 0 {
+		return msg
+	} else {
+		switch input[0] {
+		case CreateWallet:
+			fmt.Println("CreateWallet in Switch")
+		case TransferCoin:
+			fmt.Println("TransferCoin in Switch")
+		case MintCoin:
+			fmt.Println("MintCoin in Switch")
+		default:
+			return errors.New()
+		}
+		fmt.Println()
+	}
 }
 
 func useCase() {
