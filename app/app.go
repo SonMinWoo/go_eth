@@ -46,10 +46,9 @@ func NewApp(config *config.Config) {
 
 		for {
 			sc.Scan()
-			fmt.Println(sc.Text())
 
 			input := strings.Split(sc.Text(), " ")
-			if err = inputValueAssesment(input); err != nil {
+			if err = a.inputValueAssesment(input); err != nil {
 				a.log.Error("Failed to call cli", "err", err, "input", input)
 				panic(err)
 			}
@@ -58,7 +57,7 @@ func NewApp(config *config.Config) {
 
 }
 
-func inputValueAssesment(input []string) error {
+func (a *App) inputValueAssesment(input []string) error {
 	msg := errors.New("check Use Case")
 
 	if len(input) == 0 {
@@ -67,15 +66,18 @@ func inputValueAssesment(input []string) error {
 		switch input[0] {
 		case CreateWallet:
 			fmt.Println("CreateWallet in Switch")
+			a.service.MakeWallet()
 		case TransferCoin:
 			fmt.Println("TransferCoin in Switch")
 		case MintCoin:
 			fmt.Println("MintCoin in Switch")
 		default:
-			return errors.New()
+			return msg
 		}
 		fmt.Println()
 	}
+
+	return nil
 }
 
 func useCase() {

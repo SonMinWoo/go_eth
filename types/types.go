@@ -5,3 +5,8 @@ const (
 	TransferCoin = "TransferCoin"
 	MintCoin     = "MintCoin"
 )
+
+type Wallet struct {
+	PrivateKey string `json:"privateKey"`
+	PublicKey  string `json:"publicKey"`
+}
