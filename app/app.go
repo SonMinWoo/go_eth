@@ -66,7 +66,11 @@ func (a *App) inputValueAssesment(input []string) error {
 		switch input[0] {
 		case CreateWallet:
 			fmt.Println("CreateWallet in Switch")
-			a.service.MakeWallet()
+			if wallet := a.service.MakeWallet(); wallet == nil {
+				panic("failed to create")
+			} else {
+				fmt.Println("Success to create wallet")
+			}
 		case TransferCoin:
 			fmt.Println("TransferCoin in Switch")
 		case MintCoin:

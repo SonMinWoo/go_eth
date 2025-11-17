@@ -3,6 +3,7 @@ package repository
 import (
 	"block_chain/types"
 	"context"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -11,11 +12,15 @@ import (
 func (r *Repository) CreateNewWallet(wallet *types.Wallet) error {
 
 	ctx := context.Background()
-
+	wallet.Time = uint64(time.Now().Unix())
 	opt := options.Update().SetUpsert(true)
 
 	filter := bson.M{"privateKey": wallet.PrivateKey}
-	update := bson.M{"$set": wallet}
+	update := bson.M{"$set": bson.M{
+		"privateKey": wallet.PrivateKey,
+		"publicKey":  wallet.PublicKey,
+		"time":       wallet.Time,
+	}}
 
 	if _, err := r.wallet.UpdateOne(ctx, filter, update, opt); err != nil {
 		return err
