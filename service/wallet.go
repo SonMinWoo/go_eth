@@ -5,13 +5,14 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-func (s *Service) newWallet() (string, string, error) {
+func (s *Service) newKeyPair() (string, string, error) {
 
 	p256 := elliptic.P256()
 
@@ -21,24 +22,52 @@ func (s *Service) newWallet() (string, string, error) {
 		return "", "", fmt.Errorf("private key is nil")
 	} else {
 		privateKeyBytes := crypto.FromECDSA(private)
-		hexutil.Encode(privateKeyBytes)
-		fmt.Println(privateKeyBytes)
+		privateKey := hexutil.Encode(privateKeyBytes)
+
+		//privateKey: 0xb9753351d4eb715b1bb6c7c734d94990f74642fca81d8f83d9ec16c04e47a64d
+		againPrivateKey, err := crypto.HexToECDSA(privateKey[2:])
+		if err != nil {
+			return "", "", err
+		}
+
+		cPublicKey := againPrivateKey.Public()
+		publicKeyECDSA, ok := cPublicKey.(*ecdsa.PublicKey)
+
+		if !ok {
+			return "", "", errors.New("error casting public key type")
+		}
+
+		publicKey := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+		// publicKey := private.Public()
+		// publicKeyECDSA, ok := publicKey.(ecdsa.PublicKey)
+		// if !ok {
+		// 	return "", "", errors.New("error casting public key type")
+		// }
+
+		// address := crypto.PubkeyToAddress(*&publicKeyECDSA)
+		//fmt.Println(privateKeyBytes)
+
+		fmt.Println(publicKey.String())
+		fmt.Println(publicKey[:])
+		//[:] -> 대문자
+		return privateKey, hexutil.Encode(publicKey[:]), nil
 	}
 
-	return "private_key_example", "public_key_example", nil
 }
 
-func (s *Service) MakeWallet() (*types.Wallet, error) {
+func (s *Service) MakeWallet() *types.Wallet {
 
-	fmt.Println("들어옴")
 	var wallet types.Wallet
 	var err error
 
-	if wallet.PrivateKey, wallet.PublicKey, err = s.newWallet(); err != nil {
+	if wallet.PrivateKey, wallet.PublicKey, err = s.newKeyPair(); err != nil {
 		panic(err)
-	} else {
-
+	} else if err = s.repository.CreateNewWallet(&wallet); err != nil {
 		//todo - connect repository to store wallet info
-		return &wallet, nil
+		s.repository.CreateNewWallet(&wallet)
+		return nil
+	} else {
+		return &wallet
 	}
 }

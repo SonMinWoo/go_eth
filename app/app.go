@@ -36,7 +36,7 @@ func NewApp(config *config.Config) {
 	if a.repository, err = repository.NewRepository(config); err != nil {
 		panic(err)
 	} else {
-		a.service = service.NewService(config, a.repository)
+		a.service = service.NewService(config, a.repository, 1)
 
 		a.log.Info("Module Started", "time", time.Now().Unix())
 
