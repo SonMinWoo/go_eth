@@ -24,9 +24,9 @@ type Service struct {
 
 func NewService(config *config.Config, repository *repository.Repository, difficulty int64) *Service {
 	s := &Service{
-		config: config,
-
-		log: slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("module", "app"),
+		config:     config,
+		repository: repository,
+		log:        slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("module", "app"),
 	}
 
 	return s

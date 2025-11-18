@@ -48,8 +48,6 @@ func (s *Service) newKeyPair() (string, string, error) {
 		// address := crypto.PubkeyToAddress(*&publicKeyECDSA)
 		//fmt.Println(privateKeyBytes)
 
-		fmt.Println(publicKey.String())
-		fmt.Println(publicKey[:])
 		//[:] -> 대문자
 		return privateKey, hexutil.Encode(publicKey[:]), nil
 	}
@@ -65,6 +63,7 @@ func (s *Service) MakeWallet() *types.Wallet {
 		panic(err)
 	} else if err = s.repository.CreateNewWallet(&wallet); err != nil {
 		//todo - connect repository to store wallet info
+
 		s.repository.CreateNewWallet(&wallet)
 		return nil
 	} else {
