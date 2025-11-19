@@ -70,3 +70,11 @@ func (s *Service) MakeWallet() *types.Wallet {
 		return &wallet
 	}
 }
+
+func (s *Service) GetWallet(pk string) (*types.Wallet, error) {
+	if wallet, err := s.repository.GetWallet(pk); err != nil {
+		return nil, err
+	} else {
+		return wallet, nil
+	}
+}
