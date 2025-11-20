@@ -27,7 +27,7 @@ type App struct {
 	log *slog.Logger
 }
 
-func NewApp(config *config.Config) {
+func NewApp(config *config.Config, difficulty int64) {
 	a := &App{
 		config: config,
 
@@ -38,7 +38,7 @@ func NewApp(config *config.Config) {
 	if a.repository, err = repository.NewRepository(config); err != nil {
 		panic(err)
 	} else {
-		a.service = service.NewService(config, a.repository, 1)
+		a.service = service.NewService(config, a.repository, difficulty)
 
 		a.log.Info("Module Started", "time", time.Now().Unix())
 
