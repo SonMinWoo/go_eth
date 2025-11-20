@@ -2,6 +2,11 @@ package service
 
 import (
 	"block_chain/types"
+	"bytes"
+	"crypto/sha256"
+	"encoding/binary"
+	"fmt"
+	"math"
 	"math/big"
 )
 
@@ -17,4 +22,51 @@ func (s *Service) NewPow(b *types.Block) *PowWork {
 	//1이 들어가면 2(10), 2가 들어가면 4(100)... -> 비트 밀기(비트마스크)
 	t.Lsh(t, uint(256-s.difficulty))
 	return &PowWork{Block: b, Target: t, Difficulty: &s.difficulty}
+}
+
+func (p *PowWork) RunMining() (int64, []byte) {
+	var iHash big.Int
+	var hash [32]byte
+
+	nonce := 0
+
+	for nonce < math.MaxInt64 {
+
+		//makehash
+		d := p.makeHash(nonce)
+		hash := sha256.Sum256(d)
+
+		iHash.SetBytes(hash[:])
+
+		if iHash.Cmp(p.Target) == -1 {
+			break
+		} else {
+			nonce++
+		}
+	}
+
+	fmt.Println()
+	return int64(nonce), hash[:]
+}
+
+func (p *PowWork) makeHash(nonce int) []byte {
+	return bytes.Join(
+		[][]byte{
+			p.Block.PrevHash,
+			intToHex(*p.Difficulty),
+			intToHex(int64(nonce)),
+		},
+		[]byte{},
+	)
+}
+
+func intToHex(number int64) []byte {
+	b := new(bytes.Buffer)
+
+	if err := binary.Write(b, binary.BigEndian, number); err != nil {
+		panic(err)
+	} else {
+		return b.Bytes()
+	}
+
 }

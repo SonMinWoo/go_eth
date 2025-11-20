@@ -27,6 +27,10 @@ func (s *Service) CreateBLock(txs []*types.Transaction, prevHash []byte, height 
 	} else {
 		pHash = latestBlock.Hash
 
+		newBlock := createBlockInner(txs, pHash, height)
+
+		pow := s.NewPow(newBlock)
+
 		//create new block
 	}
 	return nil
