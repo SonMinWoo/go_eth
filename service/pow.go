@@ -31,10 +31,12 @@ func (p *PowWork) RunMining() (int64, []byte) {
 	nonce := 0
 
 	for nonce < math.MaxInt64 {
-
+		fmt.Println("nonce: ", nonce)
 		//makehash
 		d := p.makeHash(nonce)
 		hash := sha256.Sum256(d)
+
+		fmt.Printf("\r%x", hash)
 
 		iHash.SetBytes(hash[:])
 

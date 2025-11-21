@@ -86,6 +86,7 @@ func (a *App) inputValueAssesment(input []string) error {
 			}
 		case TransferCoin:
 			fmt.Println("TransferCoin in Switch")
+			a.service.CreateBLock([]*Transaction{}, []byte{}, 0)
 		case MintCoin:
 			fmt.Println("MintCoin in Switch")
 		case ConnectionWallet:
