@@ -2,8 +2,10 @@ package service
 
 import (
 	"block_chain/types"
+	"bytes"
 	"crypto/ecdsa"
 	"crypto/rand"
+	"encoding/gob"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -22,7 +24,7 @@ func (s *Service) CreateBLock(txs []*types.Transaction, prevHash []byte, height 
 			//create genessis block
 			genessisMessage := "This is genessis block"
 
-			tx := createTransaction(genessisMessage, "0x50885a7528dab3a7bf09b1ec9e92c05865f5e2370b0e8d218d7cfbb45dac6913", "", "", 1)
+			tx := createTransaction(genessisMessage, "0x687964e8c025406a6edac74d251808cfdd42f3c4", "", "", 1)
 			//Create new block
 			newBlock := createBlockInner([]*types.Transaction{tx}, pHash, height)
 			//마이닝
@@ -94,4 +96,24 @@ func createTransaction(message, from, to, amount string, block int64) *types.Tra
 		}
 	}
 
+}
+
+func HashTransactions(b *types.Block) []byte {
+	var txHashes [][]byte
+
+	for _, tx := range b.Transactions {
+		var encoded bytes.Buffer
+
+		enc := gob.NewEncoder(&encoded)
+
+		if err := enc.Encode(tx); err != nil {
+			panic(err)
+		} else {
+			txHashes = append(txHashes, encoded.Bytes())
+		}
+	}
+
+	tree := NewMerkleTree(txHashes)
+
+	return tree.RootNode.Data
 }
