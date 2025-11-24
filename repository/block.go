@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -34,8 +33,8 @@ func (r *Repository) SaveBlock(newBlock *types.Block) error {
 
 	update := bson.M{"$set": bson.M{
 		"time":        newBlock.Time,
-		"hash":        hexutil.Encode(newBlock.Hash),
-		"prevHash":    hexutil.Encode(newBlock.PrevHash),
+		"hash":        newBlock.Hash,
+		"prevHash":    newBlock.PrevHash,
 		"nonce":       newBlock.Nonce,
 		"height":      newBlock.Height,
 		"transaction": newBlock.Transactions,

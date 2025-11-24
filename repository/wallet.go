@@ -54,3 +54,18 @@ func (r *Repository) GetWallet(pk string) (*types.Wallet, error) {
 		return &wallet, nil
 	}
 }
+
+func (r *Repository) GetWalletByPublicKey(pub string) (*types.Wallet, error) {
+
+	ctx := context.Background()
+
+	var wallet types.Wallet
+
+	filter := bson.M{"publicKey": pub}
+
+	if err := r.wallet.FindOne(ctx, filter, options.FindOne()).Decode(&wallet); err != nil {
+		return nil, err
+	} else {
+		return &wallet, nil
+	}
+}

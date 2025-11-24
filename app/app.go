@@ -85,10 +85,22 @@ func (a *App) inputValueAssesment(input []string) error {
 				fmt.Println()
 			}
 		case TransferCoin:
-			fmt.Println("TransferCoin in Switch")
-			a.service.CreateBLock([]*Transaction{}, []byte{}, 0)
+			if from == "" {
+				a.log.Info("Not Connected")
+				fmt.Println()
+				return nil
+			} else {
+				a.service.CreateBLock([]*Transaction{}, []byte{}, from)
+			}
+
 		case MintCoin:
-			fmt.Println("MintCoin in Switch")
+			if from == "" {
+				a.log.Debug("Not Connected")
+				fmt.Println()
+				return nil
+			} else {
+
+			}
 		case ConnectionWallet:
 			fmt.Println(from)
 			if from != "" {
