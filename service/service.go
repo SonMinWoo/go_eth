@@ -27,6 +27,7 @@ func NewService(config *config.Config, repository *repository.Repository, diffic
 		config:     config,
 		repository: repository,
 		log:        slog.New(slog.NewJSONHandler(os.Stdout, nil)).With("module", "app"),
+		difficulty: difficulty,
 	}
 
 	return s

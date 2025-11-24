@@ -15,39 +15,41 @@ import (
 )
 
 func (s *Service) CreateBLock(txs []*types.Transaction, prevHash []byte, height int64) *types.Block {
-	var pHash []byte
 
-	if latestBlock, err := s.repository.GetLatestBlock(); err != nil {
+	var block *types.Block
 
+	latestBlock, err := s.repository.GetLatestBlock()
+	s.log.Info("Latest block fetched", "block", latestBlock, "err", err)
+	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			s.log.Info("Genessis block will be created")
-			//create genessis block
+
 			genessisMessage := "This is genessis block"
 
 			tx := createTransaction(genessisMessage, "0x687964e8c025406a6edac74d251808cfdd42f3c4", "", "", 1)
-			//Create new block
-			newBlock := createBlockInner([]*types.Transaction{tx}, pHash, height)
-			//마이닝
-			pow := s.NewPow(newBlock)
-			newBlock.Nonce, newBlock.Hash = pow.RunMining()
 
-			return newBlock
-		} else {
-			s.log.Error("Failed to get latest block", "Err", err)
-			panic(err)
+			block = createBlockInner([]*types.Transaction{tx}, prevHash, height)
+			pow := s.NewPow(block)
+			block.Nonce, block.Hash = pow.RunMining()
 		}
 	} else {
-		pHash = latestBlock.Hash
 
-		newBlock := createBlockInner(txs, pHash, height)
+		block = createBlockInner(txs, latestBlock.Hash, height)
 
-		pow := s.NewPow(newBlock)
+		pow := s.NewPow(block)
 
-		newBlock.Nonce, newBlock.Hash = pow.RunMining()
-
-		//create new block
+		block.Nonce, block.Hash = pow.RunMining()
+		s.log.Info("New block created", "block", block)
 	}
-	return nil
+
+	if err := s.repository.SaveBlock(block); err != nil {
+		s.log.Error("Failed to save block", "err", err)
+		panic(err)
+	} else {
+		s.log.Info("Block saved successfully", "height", block.Height, "hash", fmt.Sprintf("%x", block.Hash))
+		return block
+	}
+
 }
 
 func createBlockInner(txs []*types.Transaction, prevHash []byte, height int64) *types.Block {
@@ -71,7 +73,7 @@ func createTransaction(message, from, to, amount string, block int64) *types.Tra
 		Message: message,
 		From:    from,
 		To:      to,
-		Amount:  amount,
+		Amount:  amount[2:],
 	}
 
 	dataToSign := fmt.Sprintf("%x\n", data)
@@ -99,6 +101,7 @@ func createTransaction(message, from, to, amount string, block int64) *types.Tra
 }
 
 func HashTransactions(b *types.Block) []byte {
+
 	var txHashes [][]byte
 
 	for _, tx := range b.Transactions {

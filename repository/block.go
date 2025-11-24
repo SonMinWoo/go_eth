@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -21,5 +22,28 @@ func (r *Repository) GetLatestBlock() (*types.Block, error) {
 	} else {
 		fmt.Println(block)
 		return &block, nil
+	}
+}
+
+func (r *Repository) SaveBlock(newBlock *types.Block) error {
+	ctx := context.Background()
+
+	r.log.Info("Saving block", "block", newBlock)
+
+	filter := bson.M{"hash": newBlock.Hash}
+
+	update := bson.M{"$set": bson.M{
+		"time":        newBlock.Time,
+		"hash":        hexutil.Encode(newBlock.Hash),
+		"prevHash":    hexutil.Encode(newBlock.PrevHash),
+		"nonce":       newBlock.Nonce,
+		"height":      newBlock.Height,
+		"transaction": newBlock.Transactions,
+	}}
+
+	if _, err := r.block.UpdateOne(ctx, filter, update, options.Update().SetUpsert(true)); err != nil {
+		return err
+	} else {
+		return nil
 	}
 }
