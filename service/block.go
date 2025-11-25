@@ -10,46 +10,116 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/shopspring/decimal"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func (s *Service) CreateBLock(txs []*types.Transaction, prevHash []byte, from string) *types.Block {
-
+func (s *Service) CreateBLock(from, to, value string) {
 	var block *types.Block
+	var tx *types.Transaction
 
-	if wallet, err := s.repository.GetWalletByPublicKey(from); err != nil {
-		s.log.Error("Failed to get wallet by public key", "publicKey", from, "err", err)
+	if latestBlock, err := s.repository.GetLatestBlock(); err != nil {
+		if err == mongo.ErrNoDocuments {
+			s.log.Info("Genessis block will be created")
+
+			genessisMessage := "This is genessis block"
+
+			if pk, _, err := s.newKeyPair(); err != nil {
+				panic(err)
+			} else {
+				tx = createTransaction(genessisMessage, common.Address{}.String(), pk, to, value, 1)
+				block = createBlockInner([]*types.Transaction{tx}, "", 1)
+			}
+		}
+	} else {
+
+		if common.HexToAddress(from) == (common.Address{}) {
+			//Mint
+			// todo ->private key 가져오기
+			if pk, _, err := s.newKeyPair(); err != nil {
+				panic(err)
+			} else {
+				tx = createTransaction("MintCoin", common.Address{}.String(), pk, to, value, 1)
+			}
+
+		} else {
+			//Transfer
+			if wallet, err := s.repository.GetWalletByPublicKey(from); err != nil {
+				s.log.Error("Failed to get wallet by public key", "publicKey", from, "err", err)
+				panic(err)
+			} else {
+				// todo -> from 밸런스 ㅔ크
+				fromDecimalBalance, _ := decimal.NewFromString(wallet.Balance)
+				valueDecimal, _ := decimal.NewFromString(value)
+				//wallet.Balance < value -> error
+				if fromDecimalBalance.Cmp(valueDecimal) == -1 {
+					s.log.Info("Insufficient balance", "balance", wallet.Balance, "transferAmount", value)
+					return
+				} else {
+					fromDecimalBalance.Sub(valueDecimal)
+					wallet.Balance = fromDecimalBalance.String()
+				}
+				if err := s.repository.CreateNewWallet(wallet); err != nil {
+					s.log.Error("Failed to update wallet balance", "err", err)
+					panic(err)
+				}
+				//todo -> update wallet balance
+				tx = createTransaction("TransferCoin", from, wallet.PrivateKey, to, value, 1)
+			}
+		}
+		block = createBlockInner([]*types.Transaction{tx}, latestBlock.Hash, latestBlock.Height+1)
+
+	}
+	pow := s.NewPow(block)
+	block.Nonce, block.Hash = pow.RunMining()
+	if err := s.repository.SaveBlock(block); err != nil {
+		s.log.Error("Failed to save block", "err", err)
 		panic(err)
 	} else {
-		latestBlock, err := s.repository.GetLatestBlock()
-		if err != nil {
-			if err == mongo.ErrNoDocuments {
-				s.log.Info("Genessis block will be created")
-
-				genessisMessage := "This is genessis block"
-
-				tx := createTransaction(genessisMessage, from, wallet.PrivateKey, "", "", 1)
-
-				block = createBlockInner([]*types.Transaction{tx}, "", 1)
-
-			}
-		} else {
-			block = createBlockInner(txs, latestBlock.Hash, latestBlock.Height+1)
-		}
-		pow := s.NewPow(block)
-
-		block.Nonce, block.Hash = pow.RunMining()
-		s.log.Info("New block created", "block", block)
-
-		if err := s.repository.SaveBlock(block); err != nil {
-			s.log.Error("Failed to save block", "err", err)
-			panic(err)
-		} else {
-			s.log.Info("Block saved successfully", "height", block.Height, "hash", fmt.Sprintf("%x", block.Hash))
-			return block
-		}
+		s.log.Info("Block saved successfully", "height", block.Height, "hash", fmt.Sprintf("%x", block.Hash))
 	}
+
+	// var block *types.Block
+	// var err error
+
+	// block, err = s.repository.GetLatestBlock()
+
+	// if wallet, err := s.repository.GetWalletByPublicKey(from); err != nil {
+	// 	s.log.Error("Failed to get wallet by public key", "publicKey", from, "err", err)
+	// 	panic(err)
+	// } else {
+	// 	latestBlock, err := s.repository.GetLatestBlock()
+	// 	var block *types.Block
+	// 	if err != nil {
+	// 		if err == mongo.ErrNoDocuments {
+	// 			s.log.Info("Genessis block will be created")
+
+	// 			genessisMessage := "This is genessis block"
+
+	// 			tx := createTransaction(genessisMessage, from, wallet.PrivateKey, to, value, 1)
+
+	// 			block = createBlockInner([]*types.Transaction{tx}, "", 1)
+
+	// 		}
+	// 	} else {
+	// 		tx := createTransaction("New Block is created", from, wallet.PrivateKey, to, value, latestBlock.Height+1)
+	// 		block = createBlockInner([]*types.Transaction{tx}, latestBlock.Hash, latestBlock.Height+1)
+	// 	}
+	// 	pow := s.NewPow(block)
+
+	// 	block.Nonce, block.Hash = pow.RunMining()
+	// 	s.log.Info("New block created", "block", block)
+
+	// 	if err := s.repository.SaveBlock(block); err != nil {
+	// 		s.log.Error("Failed to save block", "err", err)
+	// 		panic(err)
+	// 	} else {
+	// 		s.log.Info("Block saved successfully", "height", block.Height, "hash", fmt.Sprintf("%x", block.Hash))
+	// 		return block
+	// 	}
+	// }
 
 }
 

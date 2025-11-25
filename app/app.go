@@ -14,6 +14,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -89,17 +90,19 @@ func (a *App) inputValueAssesment(input []string) error {
 				a.log.Info("Not Connected")
 				fmt.Println()
 				return nil
+			} else if input[1] != "" || input[2] != "" {
+				a.log.Info("Not Connected")
 			} else {
-				a.service.CreateBLock([]*Transaction{}, []byte{}, from)
+				a.service.CreateBLock(from, input[1], input[2])
 			}
 
 		case MintCoin:
-			if from == "" {
-				a.log.Debug("Not Connected")
+			if input[1] != "" || input[2] != "" {
+				a.log.Info("Not Connected")
 				fmt.Println()
 				return nil
 			} else {
-
+				a.service.CreateBLock((common.Address{}).String(), input[1], input[2])
 			}
 		case ConnectionWallet:
 			fmt.Println(from)

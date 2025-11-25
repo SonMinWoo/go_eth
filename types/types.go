@@ -9,6 +9,7 @@ const (
 type Wallet struct {
 	PrivateKey string `json:"privateKey"`
 	PublicKey  string `json:"publicKey"`
+	Balance    string `json:"balance"`
 	Time       uint64 `json:"time"`
 }
 
