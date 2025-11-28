@@ -8,6 +8,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -19,6 +20,7 @@ import (
 func (s *Service) CreateBLock(from, to, value string) {
 	var block *types.Block
 	var tx *types.Transaction
+	var toBalance string
 
 	if latestBlock, err := s.repository.GetLatestBlock(); err != nil {
 		if err == mongo.ErrNoDocuments {
@@ -42,6 +44,7 @@ func (s *Service) CreateBLock(from, to, value string) {
 				panic(err)
 			} else {
 				tx = createTransaction("MintCoin", common.Address{}.String(), pk, to, value, 1)
+				toBalance = value
 			}
 
 		} else {
@@ -61,10 +64,12 @@ func (s *Service) CreateBLock(from, to, value string) {
 					fromDecimalBalance.Sub(valueDecimal)
 					wallet.Balance = fromDecimalBalance.String()
 				}
-				if err := s.repository.CreateNewWallet(wallet); err != nil {
-					s.log.Error("Failed to update wallet balance", "err", err)
-					panic(err)
-				}
+
+				//todo ->전송순서 체크
+				// if err := s.repository.CreateNewWallet(wallet); err != nil {
+				// 	s.log.Error("Failed to update wallet balance", "err", err)
+				// 	panic(err)
+				// }
 				//todo -> update wallet balance
 				tx = createTransaction("TransferCoin", from, wallet.PrivateKey, to, value, 1)
 			}
@@ -74,7 +79,11 @@ func (s *Service) CreateBLock(from, to, value string) {
 	}
 	pow := s.NewPow(block)
 	block.Nonce, block.Hash = pow.RunMining()
-	if err := s.repository.SaveBlock(block); err != nil {
+
+	if err := s.repository.UpsertWalletsWhenTransfer(from, to, value, toBalance); err != nil {
+		s.log.Error("Failed to upsert when transfer", "to", to, "value", value, "err", err)
+		panic(err)
+	} else if err := s.repository.SaveBlock(block); err != nil {
 		s.log.Error("Failed to save block", "err", err)
 		panic(err)
 	} else {
@@ -148,6 +157,8 @@ func createTransaction(message, from, pk, to, amount string, block int64) *types
 	}
 
 	dataToSign := fmt.Sprintf("%x\n", data)
+
+	pk = strings.TrimPrefix(pk, "0x")
 
 	if ecdsaPrivatekKey, err := crypto.HexToECDSA(pk); err != nil {
 		panic(err)

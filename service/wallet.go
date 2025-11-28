@@ -57,7 +57,7 @@ func (s *Service) newKeyPair() (string, string, error) {
 func (s *Service) MakeWallet() *types.Wallet {
 
 	wallet := types.Wallet{
-		Balance: "",
+		Balance: "0",
 	}
 	var err error
 

@@ -90,14 +90,14 @@ func (a *App) inputValueAssesment(input []string) error {
 				a.log.Info("Not Connected")
 				fmt.Println()
 				return nil
-			} else if input[1] != "" || input[2] != "" {
+			} else if input[1] == "" || input[2] == "" {
 				a.log.Info("Not Connected")
 			} else {
 				a.service.CreateBLock(from, input[1], input[2])
 			}
 
 		case MintCoin:
-			if input[1] != "" || input[2] != "" {
+			if input[1] == "" || input[2] == "" {
 				a.log.Info("Not Connected")
 				fmt.Println()
 				return nil

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -71,19 +72,33 @@ func (r *Repository) GetWalletByPublicKey(pub string) (*types.Wallet, error) {
 	}
 }
 
-func (r *Repository) UpsertWhenTransfer(to, value string) error {
+func (r *Repository) UpsertWalletsWhenTransfer(from, to, fromBalance, toBalance string) error {
 	ctx := context.Background()
-
 	opt := options.Update().SetUpsert(true)
+
+	if from != (common.Address{}.String()) {
+
+		//bulkwrite도 가능
+		filter := bson.M{"publicKey": to}
+		update := bson.M{"$set": bson.M{
+			"balance": fromBalance,
+		}}
+
+		_, err := r.wallet.UpdateOne(ctx, filter, update, opt)
+		if err != nil {
+			return err
+		}
+	}
 
 	filter := bson.M{"publicKey": to}
 	update := bson.M{"$set": bson.M{
-		"balance": value,
+		"balance": toBalance,
 	}}
 
-	if _, err := r.wallet.UpdateOne(ctx, filter, update, opt); err != nil {
+	_, err := r.wallet.UpdateOne(ctx, filter, update, opt)
+
+	if err != nil {
 		return err
-	} else {
-		return nil
 	}
+	return nil
 }
