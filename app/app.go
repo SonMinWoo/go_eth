@@ -144,7 +144,7 @@ func (a *App) inputValueAssesment(input []string) error {
 		default:
 			return msg
 		}
-		fmt.Println()
+		fmt.Println("SUCCESS TO MINING")
 	}
 
 	return nil

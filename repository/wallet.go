@@ -75,11 +75,11 @@ func (r *Repository) GetWalletByPublicKey(pub string) (*types.Wallet, error) {
 func (r *Repository) UpsertWalletsWhenTransfer(from, to, fromBalance, toBalance string) error {
 	ctx := context.Background()
 	opt := options.Update().SetUpsert(true)
-
+	r.log.Info("UpsertWalletsWhenTransfer", "from", from, "to", to, "fromBalance", fromBalance, "toBalance", toBalance)
 	if from != (common.Address{}.String()) {
 
 		//bulkwrite도 가능
-		filter := bson.M{"publicKey": to}
+		filter := bson.M{"publicKey": from}
 		update := bson.M{"$set": bson.M{
 			"balance": fromBalance,
 		}}

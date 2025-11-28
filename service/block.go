@@ -52,17 +52,30 @@ func (s *Service) CreateBLock(from, to, value string) {
 			if wallet, err := s.repository.GetWalletByPublicKey(from); err != nil {
 				s.log.Error("Failed to get wallet by public key", "publicKey", from, "err", err)
 				panic(err)
+			} else if toWallet, err := s.repository.GetWalletByPublicKey(to); err != nil {
+				if err == mongo.ErrNoDocuments {
+					s.log.Error("Can't find new wallet", to, "err", err)
+				} else {
+					s.log.Error("Failed to get to wallet by public key", "publicKey", to, "err", err)
+					panic(err)
+				}
 			} else {
 				// todo -> from 밸런스 ㅔ크
 				fromDecimalBalance, _ := decimal.NewFromString(wallet.Balance)
 				valueDecimal, _ := decimal.NewFromString(value)
+				toDecimalBalance, _ := decimal.NewFromString(toWallet.Balance)
+
 				//wallet.Balance < value -> error
 				if fromDecimalBalance.Cmp(valueDecimal) == -1 {
 					s.log.Info("Insufficient balance", "balance", wallet.Balance, "transferAmount", value)
 					return
 				} else {
-					fromDecimalBalance.Sub(valueDecimal)
-					wallet.Balance = fromDecimalBalance.String()
+					toBalance = value
+					toDecimalBalance = toDecimalBalance.Add(valueDecimal)
+					toBalance = toDecimalBalance.String()
+
+					fromDecimalBalance = fromDecimalBalance.Sub(valueDecimal)
+					value = fromDecimalBalance.String()
 				}
 
 				//todo ->전송순서 체크
